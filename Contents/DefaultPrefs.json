@@ -1,12 +1,12 @@
 [
         {
                 "id": "username",
-                "label": "Opensubtitles Username:",
+                "label": "OpenSubtitles Username:",
                 "type": "text"
         },
         {
                 "id": "password",
-                "label": "Opensubtitles Password:",
+                "label": "OpenSubtitles Password:",
                 "type": "text",
                 "option": "hidden"
         },
