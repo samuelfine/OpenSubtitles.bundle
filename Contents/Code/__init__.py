@@ -8,7 +8,7 @@ subtitleExt       = ['utf','utf8','utf-8','sub','srt','smi','rt','ssa','aqt','js
  
 def Start():
   HTTP.CacheTime = CACHE_1DAY
-  HTTP.Headers['User-agent'] = 'plexapp.com v9.0'
+  HTTP.Headers['User-Agent'] = 'plexapp.com v9.0'
 
 @expose
 def GetImdbIdFromHash(openSubtitlesHash, lang):
@@ -29,7 +29,6 @@ def GetImdbIdFromHash(openSubtitlesHash, lang):
     return None
 
 def opensubtitlesProxy():
-  HTTP.Headers['User-agent'] = 'plexapp.com v9.0'
   proxy = XMLRPC.Proxy(OS_API)
   username = Prefs["username"]
   password = Prefs["password"]
@@ -60,7 +59,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
       st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True)[0] #most downloaded subtitle file for current language
       if st['SubFormat'] in subtitleExt:
         subUrl = st['SubDownloadLink']
-        subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':''}).content
+        subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'}).content
         subData = Archive.GzipDecompress(subGz)
         part.subtitles[Locale.Language.Match(st['SubLanguageID'])][subUrl] = Proxy.Media(subData, ext=st['SubFormat'])
     else:
@@ -68,7 +67,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
   
 class OpenSubtitlesAgentMovies(Agent.Movies):
   name = 'OpenSubtitles.org'
-  languages = [Locale.Language.English]
+  languages = [Locale.Language.NoLanguage]
   primary_provider = False
   contributes_to = ['com.plexapp.agents.imdb']
   
@@ -77,7 +76,8 @@ class OpenSubtitlesAgentMovies(Agent.Movies):
     Log(media.primary_metadata.id.split('tt')[1].split('?')[0])
     results.Append(MetadataSearchResult(
       id    = media.primary_metadata.id.split('tt')[1].split('?')[0],
-      score = 100  ))
+      score = 100
+    ))
     
   def update(self, metadata, media, lang):
     (proxy, token) = opensubtitlesProxy()
@@ -87,14 +87,15 @@ class OpenSubtitlesAgentMovies(Agent.Movies):
 
 class OpenSubtitlesAgentTV(Agent.TV_Shows):
   name = 'OpenSubtitles.org'
-  languages = [Locale.Language.English]
+  languages = [Locale.Language.NoLanguage]
   primary_provider = False
   contributes_to = ['com.plexapp.agents.thetvdb']
 
   def search(self, results, media, lang):
     results.Append(MetadataSearchResult(
       id    = 'null',
-      score = 100  ))
+      score = 100
+    ))
 
   def update(self, metadata, media, lang):
     (proxy, token) = opensubtitlesProxy()
