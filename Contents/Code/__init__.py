@@ -43,6 +43,8 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
   langList = [Prefs["langPref1"]]
   if Prefs["langPref2"] != 'None' and Prefs["langPref1"] != Prefs["langPref2"]:
     langList.append(Prefs["langPref2"])
+  if Prefs["langPref3"] != 'None' and Prefs["langPref1"] != Prefs["langPref3"] and Prefs["langPref2"] != Prefs["langPref3"]:
+    langList.append(Prefs["langPref3"])
   for l in langList:
     Log('Looking for match for GUID %s and size %d' % (part.openSubtitleHash, part.size))
     subtitleResponse = proxy.SearchSubtitles(token,[{'sublanguageid':l, 'moviehash':part.openSubtitleHash, 'moviebytesize':str(part.size)}])['data']
