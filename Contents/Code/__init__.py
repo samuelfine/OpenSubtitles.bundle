@@ -95,7 +95,7 @@ def lcs(word1,word2):
 	return sorted_cmn_subs.pop()[1]
 
 class OpenSubtitlesAgentMovies(Agent.Movies):
-  name = 'OpenSubtitles.org(MODIFIED)'
+  name = 'OpenSubtitles.org'
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
   contributes_to = ['com.plexapp.agents.imdb']
@@ -115,7 +115,7 @@ class OpenSubtitlesAgentMovies(Agent.Movies):
         fetchSubtitles(proxy, token, part, metadata.id)
 
 class OpenSubtitlesAgentTV(Agent.TV_Shows):
-  name = 'OpenSubtitles.org(MODIFIED)'
+  name = 'OpenSubtitles.org'
   languages = [Locale.Language.NoLanguage]
   primary_provider = False
   contributes_to = ['com.plexapp.agents.thetvdb']
