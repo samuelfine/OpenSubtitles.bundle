@@ -83,17 +83,6 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
     else:
       Log('No subtitles available for language ' + l)
 
-def lcs(word1,word2):
-	w1 = set(word1[i:j] for i in range(0,len(word1))
-		for j in range (1,len(word1)+1))
-	w2 = set(word2[i:j] for i in range(0, len(word2))
-		for j in range(1,len(word2)+1))
-	common_subs = w1.intersection(w2)
-	
-	sorted_cmn_subs = sorted([(len(str),str) for str in list(common_subs)])
-
-	return sorted_cmn_subs.pop()[1]
-
 class OpenSubtitlesAgentMovies(Agent.Movies):
   name = 'OpenSubtitles.org'
   languages = [Locale.Language.NoLanguage]
