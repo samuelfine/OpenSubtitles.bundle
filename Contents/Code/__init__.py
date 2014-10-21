@@ -61,8 +61,9 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
           subtitleResponse.remove(st)
       st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True) #most downloaded subtitle file for current language
       for sub in st:
-	Log('Comparing %s and %s' %(sub['SubFileName'], part.file))
-	score = difflib.SequenceMatcher(None,sub['SubFileName'], part.file[21:]).ratio()
+	filename = part.file.rsplit('/',1)[1]
+	score = difflib.SequenceMatcher(None,sub['SubFileName'], filename).ratio()
+	Log('Comparing %s VS. %s and it had the ratio: %f' %(sub['SubFileName'], filename, score))
 	lastScore = float(0.0)
 	if (score*100) >= 60:
 	  if lastScore < score:
@@ -73,13 +74,10 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
 	  if score <60:
             st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True)[0]
       if st['SubFormat'] in subtitleExt:
-        Log(st)
-        subUrl = st['SubDownloadLink']
-        subUrlElements = subUrl.rsplit('/',1)
-        subFilename = subUrlElements[0]
+        subUrl = st['SubDownloadLink'].rsplit('/',1)[0]
         subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'}).content
         subData = Archive.GzipDecompress(subGz)
-        part.subtitles[Locale.Language.Match(st['SubLanguageID'])][subFilename] = Proxy.Media(subData, ext=st['SubFormat'])
+        part.subtitles[Locale.Language.Match(st['SubLanguageID'])][subUrl] = Proxy.Media(subData, ext=st['SubFormat'])
     else:
       Log('No subtitles available for language ' + l)
 
