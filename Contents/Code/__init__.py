@@ -103,7 +103,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
 
       if st['SubFormat'] in SUBTITLE_EXT:
 
-        subUrl = st['SubDownloadLink'].rsplit('/',1)[0]
+        subUrl = st['SubDownloadLink'].rsplit('/sid',1)[0]
         subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'}).content
         subData = Archive.GzipDecompress(subGz)
         part.subtitles[Locale.Language.Match(st['SubLanguageID'])][subUrl] = Proxy.Media(subData, ext=st['SubFormat'])
