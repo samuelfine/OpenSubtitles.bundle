@@ -18,13 +18,8 @@ def Start():
 def opensubtitlesProxy():
 
   proxy = XMLRPC.Proxy(OS_API)
-  username = Prefs['username']
-  password = Prefs['password']
-
-  if username == None or password == None:
-
-    username = ''
-    password = ''
+  username = Prefs['username'] if Prefs['username'] else ''
+  password = Prefs['password'] if Prefs['password'] else ''
 
   token = proxy.LogIn(username, password, 'en', OS_PLEX_USERAGENT)['token']
 
@@ -59,17 +54,18 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
 
       st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True) #most downloaded subtitle file for current language
 
+      lastScore = float(0.0)
+
       for sub in st:
 
         filename = part.file.rsplit('/',1)[1]
         score = difflib.SequenceMatcher(None, sub['SubFileName'], filename).ratio()
         Log('Comparing "%s" vs. "%s" and it had the ratio: %f' % (sub['SubFileName'], filename, score))
-        lastScore = float(0.0)
 
         if score >= 0.6:
 
           if lastScore < score:
-            Log('Choosing sub "%s" that scored %s' % (sub['SubFileName'], str(score)))
+            Log('Choosing sub "%s" that scored %f' % (sub['SubFileName'], score))
             st = sub
             lastScore = score
 
@@ -79,9 +75,16 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
       if st['SubFormat'] in SUBTITLE_EXT:
 
         subUrl = st['SubDownloadLink'].rsplit('/sid-',1)[0]
-        subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'}).content
-        subData = Archive.GzipDecompress(subGz)
-        part.subtitles[Locale.Language.Match(st['SubLanguageID'])][subUrl] = Proxy.Media(subData, ext=st['SubFormat'])
+
+        # Download subtitle only if it's not already present
+        if subUrl not in part.subtitles[Locale.Language.Match(st['SubLanguageID'])]:
+
+          subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'}).content
+          subData = Archive.GzipDecompress(subGz)
+          part.subtitles[Locale.Language.Match(st['SubLanguageID'])][subUrl] = Proxy.Media(subData, ext=st['SubFormat'])
+
+        else:
+          Log('Skipping, subtitle already downloaded (%s)' % (subUrl))
 
     else:
       Log('No subtitles available for language ' + l)
