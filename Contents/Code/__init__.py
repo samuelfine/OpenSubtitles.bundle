@@ -87,23 +87,22 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
 
         filename = part.file.rsplit('/',1)[1]
         score = difflib.SequenceMatcher(None, sub['SubFileName'], filename).ratio()
-        Log('Comparing %s VS. %s and it had the ratio: %f' %(sub['SubFileName'], filename, score))
+        Log('Comparing "%s" vs. "%s" and it had the ratio: %f' % (sub['SubFileName'], filename, score))
         lastScore = float(0.0)
 
-        if (score*100) >= 60:
+        if score >= 0.6:
 
           if lastScore < score:
-            Log('Chosing sub %s that scored %s' % (sub['SubFileName'],str(score)))
+            Log('Choosing sub "%s" that scored %s' % (sub['SubFileName'], str(score)))
             st = sub
             lastScore = score
 
         else:
-          if score < 60:
-            st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True)[0]
+          st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True)[0]
 
       if st['SubFormat'] in SUBTITLE_EXT:
 
-        subUrl = st['SubDownloadLink'].rsplit('/sid',1)[0]
+        subUrl = st['SubDownloadLink'].rsplit('/sid-',1)[0]
         subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'}).content
         subData = Archive.GzipDecompress(subGz)
         part.subtitles[Locale.Language.Match(st['SubLanguageID'])][subUrl] = Proxy.Media(subData, ext=st['SubFormat'])
@@ -120,10 +119,6 @@ class OpenSubtitlesAgentMovies(Agent.Movies):
   contributes_to = ['com.plexapp.agents.imdb']
 
   def search(self, results, media, lang):
-
-    Log(media.primary_metadata.id)
-    #Log(media.primary_metadata.id.split('tt')[1].split('?')[0])
-    Log(media.primary_metadata.id.strip('t'))
 
     results.Append(MetadataSearchResult(
       id    = media.primary_metadata.id.strip('t'),
