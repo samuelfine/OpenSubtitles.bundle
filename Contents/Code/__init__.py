@@ -15,30 +15,6 @@ def Start():
   HTTP.Headers['User-Agent'] = OS_PLEX_USERAGENT
 
 ####################################################################################################
-@expose
-def GetImdbIdFromHash(openSubtitlesHash, lang):
-
-  proxy = XMLRPC.Proxy(OS_API)
-
-  try:
-    os_movieInfo = proxy.CheckMovieHash('',[openSubtitlesHash])
-  except:
-    return None
-
-  if os_movieInfo['data'][openSubtitlesHash] != []:
-
-    return MetadataSearchResult(
-      id    = "tt" + str(os_movieInfo['data'][openSubtitlesHash]['MovieImdbID']),
-      name  = str(os_movieInfo['data'][openSubtitlesHash]['MovieName']),
-      year  = int(os_movieInfo['data'][openSubtitlesHash]['MovieYear']),
-      lang  = lang,
-      score = 90
-    )
-
-  else:
-    return None
-
-####################################################################################################
 def opensubtitlesProxy():
 
   proxy = XMLRPC.Proxy(OS_API)
