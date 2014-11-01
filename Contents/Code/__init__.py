@@ -99,7 +99,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
         except Ex.HTTPError, e:
           if e.code == 407:
             Log('24 hour download quota has been reached')
-            Dict['quotaReached'] = int(Datetime.Now())
+            Dict['quotaReached'] = int(Datetime.TimestampFromDatetime(Datetime.Now()))
             return None
         except:
           return None
@@ -111,7 +111,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
           Log('Download quota: %d' % (downloadQuota))
 
         else:
-          Dict['quotaReached'] = int(Datetime.Now())
+          Dict['quotaReached'] = int(Datetime.TimestampFromDatetime(Datetime.Now()))
 
       else:
         Log('Skipping, subtitle already downloaded (%s)' % (subUrl))
