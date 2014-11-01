@@ -37,7 +37,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
   langList.remove('None')
 
   # Remove all subs from languages no longer set in the agent's prefs
-  langListAlt = [Locale.Language.Match(l) for l in langList]
+  langListAlt = [Locale.Language.Match(l) for l in langList] # ISO 639-2 (from agent's prefs) --> ISO 639-1 (used to store subs in PMS)
 
   for l in part.subtitles:
     if l not in langListAlt:
@@ -93,8 +93,16 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
       # Download subtitle only if it's not already present
       if subUrl not in part.subtitles[Locale.Language.Match(st['SubLanguageID'])]:
 
-        subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'})
-        downloadQuota = int(subGz.headers['Download-Quota'])
+        try:
+          subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'})
+          downloadQuota = int(subGz.headers['Download-Quota'])
+        except Ex.HTTPError, e:
+          if e.code == 407:
+            Log('24 hour download quota has been reached')
+            Dict['quotaReached'] = int(Datetime.Now())
+            return None
+        except:
+          return None
 
         if downloadQuota > 0:
 
