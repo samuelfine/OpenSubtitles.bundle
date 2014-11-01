@@ -36,6 +36,11 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
   langList = list(set([Prefs['langPref1'], Prefs['langPref2'], Prefs['langPref3']]))
   langList.remove('None')
 
+  # Remove all subs from languages no longer set in the agent's prefs
+  for l in part.subtitles:
+    if l not in langList:
+      part.subtitles[l].validate_keys([])
+
   for l in langList:
 
     Log('Looking for match for GUID %s and size %d' % (part.openSubtitleHash, part.size))
