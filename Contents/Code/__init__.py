@@ -14,6 +14,11 @@ def Start():
   HTTP.CacheTime = CACHE_1DAY
   HTTP.Headers['User-Agent'] = OS_PLEX_USERAGENT
 
+  if 'quotaReached' not in Dict:
+
+    Dict['quotaReached'] = int(Datetime.TimestampFromDatetime(Datetime.Now())) - (24*60*60)
+    Dict.Save()
+
 ####################################################################################################
 def opensubtitlesProxy():
 
@@ -77,9 +82,17 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
       # Download subtitle only if it's not already present
       if subUrl not in part.subtitles[Locale.Language.Match(st['SubLanguageID'])]:
 
-        subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'}).content
-        subData = Archive.GzipDecompress(subGz)
-        part.subtitles[Locale.Language.Match(st['SubLanguageID'])][subUrl] = Proxy.Media(subData, ext=st['SubFormat'])
+        subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'})
+        downloadQuota = int(subGz.headers['Download-Quota'])
+
+        if downloadQuota > 0:
+
+          subData = Archive.GzipDecompress(subGz.content)
+          part.subtitles[Locale.Language.Match(st['SubLanguageID'])][subUrl] = Proxy.Media(subData, ext=st['SubFormat'])
+          Log('Download quota: %d' % (downloadQuota))
+
+        else:
+          Dict['quotaReached'] = int(Datetime.Now())
 
       else:
         Log('Skipping, subtitle already downloaded (%s)' % (subUrl))
@@ -96,6 +109,11 @@ class OpenSubtitlesAgentMovies(Agent.Movies):
   contributes_to = ['com.plexapp.agents.imdb']
 
   def search(self, results, media, lang):
+
+    if Dict['quotaReached'] > int(Datetime.TimestampFromDatetime(Datetime.Now())) - (24*60*60):
+
+      Log('24 hour download quota has been reached')
+      return None
 
     results.Append(MetadataSearchResult(
       id    = media.primary_metadata.id.strip('t'),
@@ -119,6 +137,11 @@ class OpenSubtitlesAgentTV(Agent.TV_Shows):
   contributes_to = ['com.plexapp.agents.thetvdb']
 
   def search(self, results, media, lang):
+
+    if Dict['quotaReached'] > int(Datetime.TimestampFromDatetime(Datetime.Now())) - (24*60*60):
+
+      Log('24 hour download quota has been reached')
+      return None
 
     results.Append(MetadataSearchResult(
       id    = 'null',
