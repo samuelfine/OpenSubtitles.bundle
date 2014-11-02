@@ -34,7 +34,8 @@ def opensubtitlesProxy():
 def fetchSubtitles(proxy, token, part, imdbID=''):
 
   langList = list(set([Prefs['langPref1'], Prefs['langPref2'], Prefs['langPref3']]))
-  langList.remove('None')
+  if 'None' in langList:
+    langList.remove('None')
 
   # Remove all subs from languages no longer set in the agent's prefs
   langListAlt = [Locale.Language.Match(l) for l in langList] # ISO 639-2 (from agent's prefs) --> ISO 639-1 (used to store subs in PMS)
