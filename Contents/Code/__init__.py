@@ -103,6 +103,13 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
             Dict['quotaReached'] = int(Datetime.TimestampFromDatetime(Datetime.Now()))
             return None
         except:
+          errorMsg = "Sorry, maximum download count for IP"
+          errorLocation = subGz.content.find(errorMsg)
+          if errorLocation != -1:
+            Log('Found \'%s\' in HTTP response. 24 Hour download quota reached!' % errorMsg)
+            Dict['quotaReached'] = int(Datetime.TimestampFromDatetime(Datetime.Now()))
+          else:
+            Log('Error when retrieving subtitle. Skipping')
           return None
 
         if downloadQuota > 0:
