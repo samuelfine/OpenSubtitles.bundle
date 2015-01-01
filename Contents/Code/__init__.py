@@ -95,7 +95,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
       if subUrl not in part.subtitles[Locale.Language.Match(st['SubLanguageID'])]:
 
         try:
-          subGz = HTTP.Request(subUrl, headers={'Accept-Encoding':'gzip'})
+          subGz = HTTP.Request(st['SubDownloadLink'], headers={'Accept-Encoding':'gzip'})
           downloadQuota = int(subGz.headers['Download-Quota'])
         except Ex.HTTPError, e:
           if e.code == 407:
