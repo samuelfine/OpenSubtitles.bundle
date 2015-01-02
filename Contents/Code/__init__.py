@@ -51,25 +51,31 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
     if part.openSubtitleHash != '':
 
       Log('Looking for match for GUID %s and size %d' % (part.openSubtitleHash, part.size))
-      subtitleResponse = proxy.SearchSubtitles(token,[{'sublanguageid':l, 'moviehash':part.openSubtitleHash, 'moviebytesize':str(part.size)}])['data']
-      #Log('hash/size search result: ')
-      #Log(subtitleResponse)
+      try:
+        subtitleResponse = proxy.SearchSubtitles(token,[{'sublanguageid':l, 'moviehash':part.openSubtitleHash, 'moviebytesize':str(part.size)}])['data']
+        #Log('hash/size search result: ')
+        #Log(subtitleResponse)
+      except:
+        subtitleResponse = False
 
-    if subtitleResponse == False and imdbID != '': #let's try the imdbID, if we have one...
+    if subtitleResponse == False and imdbID != '': # Let's try the imdbID, if we have one
 
       Log('Found nothing via hash, trying search with imdbid: ' + imdbID)
-      subtitleResponse = proxy.SearchSubtitles(token,[{'sublanguageid':l, 'imdbid':imdbID}])['data']
-      #Log(subtitleResponse)
+      try:
+        subtitleResponse = proxy.SearchSubtitles(token,[{'sublanguageid':l, 'imdbid':imdbID}])['data']
+        #Log(subtitleResponse)
+      except:
+        subtitleResponse = False
 
     if subtitleResponse != False:
 
-      for st in subtitleResponse: #remove any subtitle formats we don't recognize
+      for st in subtitleResponse: # Remove any subtitle formats we don't recognize
 
         if st['SubFormat'] not in SUBTITLE_EXT:
           Log('Removing a subtitle of type: ' + st['SubFormat'])
           subtitleResponse.remove(st)
 
-      st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True) #most downloaded subtitle file for current language
+      st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True) # Sort by 'most downloaded' subtitle file for current language
 
       filename = part.file.rsplit('/',1)[-1]
       lastScore = float(0.0)
@@ -102,18 +108,23 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
             Log('24 hour download quota has been reached')
             Dict['quotaReached'] = int(Datetime.TimestampFromDatetime(Datetime.Now()))
             return None
+          else:
+            Log('HTTP error: %d' % (e.code))
+            return None
         except:
           try:
             errorMsg = "Sorry, maximum download count for IP"
             errorLocation = subGz.content.find(errorMsg)
             if errorLocation != -1:
-              Log('Found \'%s\' in HTTP response. 24 Hour download quota reached!' % errorMsg)
+              Log('Found \'%s\' in HTTP response. 24 Hour download quota reached!' % (errorMsg))
               Dict['quotaReached'] = int(Datetime.TimestampFromDatetime(Datetime.Now()))
             else:
               Log('Error when retrieving subtitle. Skipping')
             return None
           except:
             Log('Error when retrieving subtitle. Skipping')
+            return None
+
         if downloadQuota > 0:
 
           subData = Archive.GzipDecompress(subGz.content)
