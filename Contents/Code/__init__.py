@@ -1,4 +1,4 @@
-# opensubtitles.org
+﻿# opensubtitles.org
 # Subtitles service allowed by www.OpenSubtitles.org
 # Language codes: http://www.opensubtitles.org/addons/export_languages.php
 
@@ -21,14 +21,58 @@ def Start():
 
 ####################################################################################################
 def opensubtitlesProxy():
-
   proxy = XMLRPC.Proxy(OS_API)
   username = Prefs['username'] if Prefs['username'] else ''
   password = Prefs['password'] if Prefs['password'] else ''
+  
+  ## Check for missing token
+  if 'proxy_token' not in Dict:
+    ## Perform login
+    Log('No valid token in Dict.')
+    (success, token) = proxyLogin(proxy, username, password)
+    if success:
+      Dict['proxy_token'] = token
+      return (proxy, token)
+    else:
+      Dict['proxy_token'] = ''
+      return (proxy, '')
+  else:
+    ## Token already exists, check if it's still valid
+    Log('Existing token found. Revalidating.')
+    if Dict['proxy_token'] != '' and checkToken(proxy, Dict['proxy_token']):
+      return (proxy, Dict['proxy_token'])
+    else:
+      ## Invalid token. Re-authenticate.
+      (success, token) = proxyLogin(proxy, username, password)
+      if success:
+        Dict['proxy_token'] = token
+        return (proxy, token)
+      else:
+        return (proxy, '')
 
+####################################################################################################
+def proxyLogin(proxy, username, password):
   token = proxy.LogIn(username, password, 'en', OS_PLEX_USERAGENT)['token']
-
-  return (proxy, token)
+  if checkToken(proxy, token):
+    Log('Successfull login.')
+    return (True, token)
+  else:
+    Log('Unsuccessful login.')
+    return (False, '')
+  
+####################################################################################################
+def checkToken(proxy, token):
+  try:
+    proxyCheck = proxy.NoOperation(token)
+    if proxyCheck['status'] == '200 OK':
+      Log('Valid token.')
+      return True
+    else:
+      Log('Invalid Token.')
+      return False
+  except:
+    Log('Error occured when checking token.')
+    return False
 
 ####################################################################################################
 def fetchSubtitles(proxy, token, part, imdbID=''):
@@ -143,10 +187,12 @@ class OpenSubtitlesAgentMovies(Agent.Movies):
   def update(self, metadata, media, lang):
 
     (proxy, token) = opensubtitlesProxy()
-
-    for i in media.items:
-      for part in i.parts:
-        fetchSubtitles(proxy, token, part, metadata.id)
+    if token != '':
+      for i in media.items:
+        for part in i.parts:
+          fetchSubtitles(proxy, token, part, metadata.id)
+    else: 
+      Log('Unable to retrieve valid token. Skipping')
 
 ####################################################################################################
 class OpenSubtitlesAgentTV(Agent.TV_Shows):
@@ -171,11 +217,11 @@ class OpenSubtitlesAgentTV(Agent.TV_Shows):
   def update(self, metadata, media, lang):
 
     (proxy, token) = opensubtitlesProxy()
-
-    for s in media.seasons:
-      # just like in the Local Media Agent, if we have a date-based season skip for now.
-      if int(s) < 1900:
-        for e in media.seasons[s].episodes:
-          for i in media.seasons[s].episodes[e].items:
-            for part in i.parts:
-              fetchSubtitles(proxy, token, part)
+    if token != '':
+      for s in media.seasons:
+        # just like in the Local Media Agent, if we have a date-based season skip for now.
+        if int(s) < 1900:
+          for e in media.seasons[s].episodes:
+            for i in media.seasons[s].episodes[e].items:
+              for part in i.parts:
+                fetchSubtitles(proxy, token, part)
