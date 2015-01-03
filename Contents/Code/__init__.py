@@ -75,7 +75,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
           Log('Removing a subtitle of type: ' + st['SubFormat'])
           subtitleResponse.remove(st)
 
-      if len(st) == 0:
+      if len(subtitleResponse) == 0:
         Log('No valid subtitles. Skipping.')
         return None
 
