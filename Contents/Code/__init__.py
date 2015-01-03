@@ -26,26 +26,26 @@ def opensubtitlesProxy():
   password = Prefs['password'] if Prefs['password'] else ''
   
   ## Check for missing token
-  if 'proxy_token' not in Dict:
+  if 'proxyToken' not in Dict:
     ## Perform login
     Log('No valid token in Dict.')
     (success, token) = proxyLogin(proxy, username, password)
     if success:
-      Dict['proxy_token'] = token
+      Dict['proxyToken'] = token
       return (proxy, token)
     else:
-      Dict['proxy_token'] = ''
+      Dict['proxyToken'] = ''
       return (proxy, '')
   else:
     ## Token already exists, check if it's still valid
     Log('Existing token found. Revalidating.')
-    if Dict['proxy_token'] != '' and checkToken(proxy, Dict['proxy_token']):
-      return (proxy, Dict['proxy_token'])
+    if Dict['proxyToken'] != '' and checkToken(proxy, Dict['proxyToken']):
+      return (proxy, Dict['proxyToken'])
     else:
       ## Invalid token. Re-authenticate.
       (success, token) = proxyLogin(proxy, username, password)
       if success:
-        Dict['proxy_token'] = token
+        Dict['proxyToken'] = token
         return (proxy, token)
       else:
         return (proxy, '')
