@@ -21,29 +21,33 @@ def Start():
 
 ####################################################################################################
 def opensubtitlesProxy():
+
   proxy = XMLRPC.Proxy(OS_API)
   username = Prefs['username'] if Prefs['username'] else ''
   password = Prefs['password'] if Prefs['password'] else ''
-  
-  ## Check for missing token
+
+  # Check for missing token
   if 'proxyToken' not in Dict:
-    ## Perform login
+    # Perform login
     Log('No valid token in Dict.')
     (success, token) = proxyLogin(proxy, username, password)
+
     if success:
       Dict['proxyToken'] = token
       return (proxy, token)
     else:
       Dict['proxyToken'] = ''
       return (proxy, '')
+
   else:
-    ## Token already exists, check if it's still valid
+    # Token already exists, check if it's still valid
     Log('Existing token found. Revalidating.')
     if Dict['proxyToken'] != '' and checkToken(proxy, Dict['proxyToken']):
       return (proxy, Dict['proxyToken'])
     else:
-      ## Invalid token. Re-authenticate.
+      # Invalid token. Re-authenticate.
       (success, token) = proxyLogin(proxy, username, password)
+
       if success:
         Dict['proxyToken'] = token
         return (proxy, token)
@@ -52,30 +56,35 @@ def opensubtitlesProxy():
 
 ####################################################################################################
 def proxyLogin(proxy, username, password):
+
   token = proxy.LogIn(username, password, 'en', OS_PLEX_USERAGENT)['token']
+
   if checkToken(proxy, token):
     Log('Successfull login.')
     return (True, token)
   else:
     Log('Unsuccessful login.')
     return (False, '')
-  
+
 ####################################################################################################
 def checkToken(proxy, token):
+
   try:
     proxyCheck = proxy.NoOperation(token)
+
     if proxyCheck['status'] == '200 OK':
       Log('Valid token.')
       return True
     else:
       Log('Invalid Token.')
       return False
+
   except:
     Log('Error occured when checking token.')
     return False
 
 ####################################################################################################
-def fetchSubtitles(proxy, token, part, imdbID=''):
+def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, episode=None):
 
   langList = list(set([Prefs['langPref1'], Prefs['langPref2'], Prefs['langPref3']]))
   if 'None' in langList:
@@ -102,11 +111,20 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
       except:
         subtitleResponse = False
 
-    if subtitleResponse == False and imdbID != '': # Let's try the imdbID, if we have one
+    if subtitleResponse == False and imdbID: # Let's try the imdbID, if we have one
 
-      Log('Found nothing via hash, trying search with imdbid: ' + imdbID)
+      Log('Found nothing via hash, trying search with imdbID: %s' % (imdbID))
       try:
         subtitleResponse = proxy.SearchSubtitles(token,[{'sublanguageid':l, 'imdbid':imdbID}])['data']
+        #Log(subtitleResponse)
+      except:
+        subtitleResponse = False
+
+    if subtitleResponse == False and filename and season and episode: # TV
+
+      Log('Found nothing via hash, trying search with filename/season/episode: %s, %s, %s' % (filename, season, episode))
+      try:
+        subtitleResponse = proxy.SearchSubtitles(token,[{'sublanguageid':l, 'season':season, 'episode':episode, 'tag':filename}])['data']
         #Log(subtitleResponse)
       except:
         subtitleResponse = False
@@ -116,7 +134,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
       for st in subtitleResponse: # Remove any subtitle formats we don't recognize
 
         if st['SubFormat'] not in SUBTITLE_EXT:
-          Log('Removing a subtitle of type: ' + st['SubFormat'])
+          Log('Removing a subtitle of type: %s' % (st['SubFormat']))
           subtitleResponse.remove(st)
 
       if len(subtitleResponse) == 0:
@@ -163,12 +181,15 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
           try:
             errorMsg = "Sorry, maximum download count for IP"
             errorLocation = subGz.content.find(errorMsg)
+
             if errorLocation != -1:
               Log('Found \'%s\' in HTTP response. 24 Hour download quota reached!' % (errorMsg))
               Dict['quotaReached'] = int(Datetime.TimestampFromDatetime(Datetime.Now()))
             else:
               Log('Error when retrieving subtitle. Skipping')
+
             return None
+
           except:
             Log('Error when retrieving subtitle. Skipping')
             return None
@@ -186,7 +207,7 @@ def fetchSubtitles(proxy, token, part, imdbID=''):
         Log('Skipping, subtitle already downloaded (%s)' % (subUrl))
 
     else:
-      Log('No subtitles available for language ' + l)
+      Log('No subtitles available for language %s' % (l))
 
 ####################################################################################################
 class OpenSubtitlesAgentMovies(Agent.Movies):
@@ -211,10 +232,11 @@ class OpenSubtitlesAgentMovies(Agent.Movies):
   def update(self, metadata, media, lang):
 
     (proxy, token) = opensubtitlesProxy()
+
     if token != '':
       for i in media.items:
         for part in i.parts:
-          fetchSubtitles(proxy, token, part, metadata.id)
+          fetchSubtitles(proxy, token, part, imdbID=metadata.id)
     else: 
       Log('Unable to retrieve valid token. Skipping')
 
@@ -241,6 +263,7 @@ class OpenSubtitlesAgentTV(Agent.TV_Shows):
   def update(self, metadata, media, lang):
 
     (proxy, token) = opensubtitlesProxy()
+
     if token != '':
       for s in media.seasons:
         # just like in the Local Media Agent, if we have a date-based season skip for now.
@@ -248,4 +271,7 @@ class OpenSubtitlesAgentTV(Agent.TV_Shows):
           for e in media.seasons[s].episodes:
             for i in media.seasons[s].episodes[e].items:
               for part in i.parts:
-                fetchSubtitles(proxy, token, part)
+                filename = String.Unquote(part.file).split('/')[-1].split('\\')[-1]
+                fetchSubtitles(proxy, token, part, filename=filename, season=str(s), episode=str(e))
+    else:
+      Log('Unable to retrieve valid token. Skipping')
