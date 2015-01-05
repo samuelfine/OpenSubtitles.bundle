@@ -60,7 +60,7 @@ def proxyLogin(proxy, username, password):
   token = proxy.LogIn(username, password, 'en', OS_PLEX_USERAGENT)['token']
 
   if checkToken(proxy, token):
-    Log('Successfull login.')
+    Log('Successful login.')
     return (True, token)
   else:
     Log('Unsuccessful login.')
