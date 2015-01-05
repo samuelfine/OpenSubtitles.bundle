@@ -84,6 +84,16 @@ def checkToken(proxy, token):
     return False
 
 ####################################################################################################
+def quotaReached():
+
+  if Dict['quotaReached'] > int(Datetime.TimestampFromDatetime(Datetime.Now())) - (24*60*60):
+
+    Log('24 hour download quota has been reached')
+    return True
+
+  return False
+
+####################################################################################################
 def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, episode=None):
 
   langList = list(set([Prefs['langPref1'], Prefs['langPref2'], Prefs['langPref3']]))
@@ -183,7 +193,7 @@ def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, 
             errorLocation = subGz.content.find(errorMsg)
 
             if errorLocation != -1:
-              Log('Found \'%s\' in HTTP response. 24 Hour download quota reached!' % (errorMsg))
+              Log('Found \'%s\' in HTTP response. 24 hour download quota has been reached.' % (errorMsg))
               Dict['quotaReached'] = int(Datetime.TimestampFromDatetime(Datetime.Now()))
             else:
               Log('Error when retrieving subtitle. Skipping')
@@ -219,9 +229,7 @@ class OpenSubtitlesAgentMovies(Agent.Movies):
 
   def search(self, results, media, lang):
 
-    if Dict['quotaReached'] > int(Datetime.TimestampFromDatetime(Datetime.Now())) - (24*60*60):
-
-      Log('24 hour download quota has been reached')
+    if quotaReached():
       return None
 
     results.Append(MetadataSearchResult(
@@ -230,6 +238,9 @@ class OpenSubtitlesAgentMovies(Agent.Movies):
     ))
 
   def update(self, metadata, media, lang):
+
+    if quotaReached():
+      return None
 
     (proxy, token) = opensubtitlesProxy()
 
@@ -250,9 +261,7 @@ class OpenSubtitlesAgentTV(Agent.TV_Shows):
 
   def search(self, results, media, lang):
 
-    if Dict['quotaReached'] > int(Datetime.TimestampFromDatetime(Datetime.Now())) - (24*60*60):
-
-      Log('24 hour download quota has been reached')
+    if quotaReached():
       return None
 
     results.Append(MetadataSearchResult(
@@ -261,6 +270,9 @@ class OpenSubtitlesAgentTV(Agent.TV_Shows):
     ))
 
   def update(self, metadata, media, lang):
+
+    if quotaReached():
+      return None
 
     (proxy, token) = opensubtitlesProxy()
 
