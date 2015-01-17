@@ -2,7 +2,7 @@
 # Subtitles service allowed by www.OpenSubtitles.org
 # Language codes: http://www.opensubtitles.org/addons/export_languages.php
 
-import difflib
+import difflib, os
 
 OS_API = 'http://plexapp.api.opensubtitles.org/xml-rpc'
 OS_PLEX_USERAGENT = 'plexapp.com v9.0'
@@ -153,7 +153,7 @@ def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, 
 
       st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True) # Sort by 'most downloaded' subtitle file for current language
 
-      filename = part.file.rsplit('/',1)[-1]
+      filename = os.path.split(part.file)[1]
       lastScore = float(0.0)
 
       for sub in st:
