@@ -134,7 +134,10 @@ def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, 
 
       Log('Found nothing via hash, trying search with filename/season/episode: %s, %s, %s' % (filename, season, episode))
       try:
-        subtitleResponse = proxy.SearchSubtitles(token,[{'sublanguageid':l, 'season':season, 'episode':episode, 'tag':filename}])['data']
+        subtitleResponse = proxy.SearchSubtitles(token,[
+          {'sublanguageid':l, 'season':season, 'episode':episode, 'tag':filename},
+          {'sublanguageid':l, 'season':season, 'episode':episode, 'query':filename}
+        ])['data']
         #Log(subtitleResponse)
       except:
         subtitleResponse = False
