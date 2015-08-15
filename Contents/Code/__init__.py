@@ -142,7 +142,7 @@ def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, 
       except:
         subtitleResponse = False
 
-    if subtitleResponse != False:
+    if subtitleResponse not in [None, False, '']:
 
       for st in subtitleResponse: # Remove any subtitle formats we don't recognize
 
