@@ -152,7 +152,7 @@ def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, 
 
       if len(subtitleResponse) == 0:
         Log('No valid subtitles. Skipping.')
-        return None
+        continue
 
       st = sorted(subtitleResponse, key=lambda k: int(k['SubDownloadsCnt']), reverse=True) # Sort by 'most downloaded' subtitle file for current language
 
@@ -189,7 +189,7 @@ def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, 
             return None
           else:
             Log('HTTP error: %d' % (e.code))
-            return None
+            continue
         except:
           try:
             errorMsg = "Sorry, maximum download count for IP"
@@ -205,7 +205,7 @@ def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, 
 
           except:
             Log('Error when retrieving subtitle. Skipping')
-            return None
+            continue
 
         if downloadQuota > 0:
 
