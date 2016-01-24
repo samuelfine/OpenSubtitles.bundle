@@ -118,6 +118,7 @@ def fetchSubtitles(proxy, token, part, imdbID=None, filename=None, season=None, 
         subtitleResponse = proxy.SearchSubtitles(token,[{'sublanguageid':l, 'moviehash':part.openSubtitleHash, 'moviebytesize':str(part.size)}])['data']
         #Log('hash/size search result: ')
         #Log(subtitleResponse)
+        subtitleResponse = False if subtitleResponse == [] else subtitleResponse
       except:
         subtitleResponse = False
 
